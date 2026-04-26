@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2d5a3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flora">
+<title>Flora — Plant ID</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌿%3C/text%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f1ec;
+    color: #1a1a1a;
+    overscroll-behavior: none;
+  }
+  body { display: flex; flex-direction: column; }
+
+  /* Header */
+  header {
+    background: #2d5a3d;
+    color: #fff;
+    padding: 14px 16px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .header-btn {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .header-btn:active { background: rgba(255,255,255,0.25); }
+
+  /* Main views */
+  main {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .view {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    display: none;
+    background: #f4f1ec;
+  }
+  .view.active { display: block; }
+
+  /* Bottom nav */
+  nav {
+    background: #fff;
+    border-top: 1px solid #e5e2dc;
+    display: flex;
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 10px 4px 12px;
+    cursor: pointer;
+    color: #888;
+    font-size: 11px;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+  }
+  .nav-btn .nav-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+  .nav-btn.active { color: #2d5a3d; font-weight: 500; }
+
+  /* Identify view */
+  .identify-view { padding: 20px 16px 80px; }
+  .hero {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    border: 1px solid #e5e2dc;
+  }
+  .hero h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #2d5a3d;
+  }
+  .hero p {
+    font-size: 14px;
+    color: #777;
+    line-height: 1.5;
+  }
+
+  .action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .action-btn {
+    background: #fff;
+    border: 1px solid #e5e2dc;
+    border-radius: 16px;
+    padding: 22px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    transition: all 0.15s;
+    color: #1a1a1a;
+  }
+  .action-btn:active { transform: scale(0.97); background: #f9f7f3; }
+  .action-btn.primary {
+    background: #2d5a3d;
+    color: #fff;
+    border-color: #2d5a3d;
+  }
+  .action-btn .ico {
+    font-size: 32px;
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+  .action-btn .label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .action-btn .sub {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  .organ-row {
+    background: #fff;
+    border: 1px solid #e5e2dc;
+    border-radius: 16px;
+    padding: 14px 16px;
+  }
+  .organ-row label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .organ-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    flex: 1;
+    min-width: 60px;
+    background: #f4f1ec;
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    padding: 8px 4px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    color: #555;
+  }
+  .pill.active {
+    background: #e8f0e8;
+    border-color: #2d5a3d;
+    color: #2d5a3d;
+    font-weight: 500;
+  }
+  .pill .pill-ico {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+
+  /* Camera view */
+  .camera-view {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    display: none;
+    z-index: 50;
+    flex-direction: column;
+  }
+  .camera-view.active { display: flex; }
+  .camera-view video {
+    flex: 1;
+    width: 100%;
+    object-fit: cover;
+    background: #000;
+  }
+  .camera-controls {
+    background: #000;
+    padding: 24px 24px max(24px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 16px;
+  }
+  .shutter {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #fff;
+    border: 4px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    box-shadow: 0 0 0 4px #000 inset;
+  }
+  .shutter:active { transform: scale(0.95); }
+  .cam-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .camera-frame {
+    position: absolute;
+    inset: 60px 30px 200px;
+    border: 2px dashed rgba(255,255,255,0.4);
+    border-radius: 24px;
+    pointer-events: none;
+  }
+  .camera-hint {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  /* Loading / processing */
+  .processing {
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .processing img {
+    max-width: 240px;
+    width: 80%;
+    border-radius: 16px;
+    margin: 0 auto 24px;
+    display: block;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e2dc;
+    border-top-color: #2d5a3d;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .processing-status {
+    font-size: 15px;
+    color: #555;
+    margin-bottom: 8px;
+  }
+  .processing-step {
+    font-size: 13px;
+    color: #999;
+  }
+
+  /* Results view */
+  .result-view { padding: 16px 16px 80px; }
+  .result-image {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    background: #e5e2dc;
+  }
+  .result-card {
+    background: #fff;
+    border: 1px solid #e5e2dc;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .match-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: #2d5a3d;
+    margin-bottom: 4px;
+  }
+  .match-sci {
+    font-size: 14px;
+    font-style: italic;
+    color: #777;
+    margin-bottom: 12px;
+  }
+  .match-confidence {
+    display: inline-block;
+    background: #e8f0e8;
+    color: #2d5a3d;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .info-row {
+    display: flex;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0ede8;
+    font-size: 14px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label {
+    width: 100px;
+    color: #888;
+    flex-shrink: 0;
+  }
+  .info-value {
+    flex: 1;
+    color: #1a1a1a;
+  }
+  .info-value em { font-style: italic; color: #555; }
+  .description {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+  }
+  .description p { margin-bottom: 10px; }
+  .description p:last-child { margin-bottom: 0; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  .alternatives {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .alt-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f9f7f3;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  .alt-name {
+    font-weight: 500;
+    color: #2d5a3d;
+  }
+  .alt-sci {
+    font-size: 12px;
+    font-style: italic;
+    color: #888;
+  }
+  .alt-score {
+    font-size: 12px;
+    color: #555;
+    background: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .result-actions button {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #e5e2dc;
+    background: #fff;
+    cursor: pointer;
+  }
+  .result-actions button:active { transform: scale(0.97); }
+  .result-actions button.save {
+    background: #2d5a3d;
+    color: #fff;
+    border-color: #2d5a3d;
+  }
+  .result-actions button.save:disabled { opacity: 0.6; }
+
+  /* Collection view */
+  .collection-view { padding: 16px 16px 80px; }
+  .collection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .collection-header h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #2d5a3d;
+  }
+  .collection-count {
+    font-size: 13px;
+    color: #888;
+  }
+  .search-box {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #e5e2dc;
+    border-radius: 12px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 14px;
+    -webkit-appearance: none;
+  }
+  .search-box:focus { outline: none; border-color: #2d5a3d; }
+
+  .collection-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .plant-card {
+    background: #fff;
+    border: 1px solid #e5e2dc;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .plant-card:active { transform: scale(0.97); }
+  .plant-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: #e5e2dc;
+    display: block;
+  }
+  .plant-card-info {
+    padding: 10px 12px;
+  }
+  .plant-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .plant-card-sci {
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .plant-card-date {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 4px;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 60px 24px;
+    color: #888;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .empty p { font-size: 15px; margin-bottom: 6px; }
+  .empty .hint { font-size: 13px; color: #aaa; }
+
+  /* Settings */
+  .settings-view { padding: 20px 16px 80px; }
+  .settings-card {
+    background: #fff;
+    border: 1px solid #e5e2dc;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .settings-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #2d5a3d;
+  }
+  .settings-card p {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .settings-card a {
+    color: #2d5a3d;
+    text-decoration: underline;
+  }
+  .api-input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #e5e2dc;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    -webkit-appearance: none;
+    margin-bottom: 10px;
+  }
+  .api-input:focus { outline: none; border-color: #2d5a3d; }
+  .save-btn {
+    width: 100%;
+    padding: 12px;
+    background: #2d5a3d;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .danger-btn {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    color: #c0392b;
+    border: 1px solid #e8a8a3;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .api-status {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+  }
+  .api-status.ok { color: #2d5a3d; }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal.active { display: flex; }
+  .modal-content {
+    background: #f4f1ec;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: slideUp 0.25s ease-out;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } }
+  .modal-header {
+    position: sticky;
+    top: 0;
+    background: #f4f1ec;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e2dc;
+    z-index: 1;
+  }
+  .modal-header h2 {
+    font-size: 17px;
+    font-weight: 600;
+    color: #2d5a3d;
+    flex: 1;
+    margin-right: 12px;
+  }
+  .modal-close {
+    background: rgba(0,0,0,0.06);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    color: #555;
+    flex-shrink: 0;
+  }
+  .modal-body { padding: 16px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 200;
+    max-width: 80%;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  .install-banner {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 16px 16px 0;
+    font-size: 13px;
+    color: #5d4037;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+  .install-banner.show { display: flex; }
+  .install-banner button {
+    background: #2d5a3d;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .install-banner .close-x {
+    background: none;
+    color: #888;
+    border: none;
+    font-size: 18px;
+    padding: 0 4px;
+    cursor: pointer;
+  }
+
+  .api-warning {
+    background: #fff3cd;
+    border: 1px solid #ffe082;
+    color: #5d4037;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .api-warning strong { display: block; margin-bottom: 4px; color: #2d5a3d; }
+  .api-warning a { color: #2d5a3d; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌿</div>
+    <span>Flora</span>
+  </div>
+  <button class="header-btn" id="btnSettings" aria-label="Settings">⚙</button>
+</header>
+
+<div class="install-banner" id="installBanner">
+  <span>Install Flora to your home screen</span>
+  <button id="btnInstall">Install</button>
+  <button class="close-x" id="btnDismissInstall">×</button>
+</div>
+
+<main>
+  <!-- Identify view -->
+  <div class="view active" id="viewIdentify">
+    <div class="identify-view">
+      <div class="hero">
+        <h2>Identify a plant</h2>
+        <p>Snap a photo or pick from your gallery. Best results with clear shots of leaves, flowers, or fruit.</p>
+      </div>
+
+      <div class="action-grid">
+        <button class="action-btn primary" id="btnTakePhoto">
+          <div class="ico">📷</div>
+          <div class="label">Take photo</div>
+          <div class="sub">Use camera</div>
+        </button>
+        <button class="action-btn" id="btnPickPhoto">
+          <div class="ico">🖼</div>
+          <div class="label">From gallery</div>
+          <div class="sub">Pick image</div>
+        </button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+
+      <div class="organ-row">
+        <label>What's in the photo?</label>
+        <div class="organ-pills" id="organPills">
+          <button class="pill active" data-organ="auto">
+            <span class="pill-ico">✨</span>Auto
+          </button>
+          <button class="pill" data-organ="leaf">
+            <span class="pill-ico">🍃</span>Leaf
+          </button>
+          <button class="pill" data-organ="flower">
+            <span class="pill-ico">🌸</span>Flower
+          </button>
+          <button class="pill" data-organ="fruit">
+            <span class="pill-ico">🍒</span>Fruit
+          </button>
+          <button class="pill" data-organ="bark">
+            <span class="pill-ico">🪵</span>Bark
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Processing view -->
+  <div class="view" id="viewProcessing">
+    <div class="processing">
+      <img id="processingImg" alt="">
+      <div class="spinner"></div>
+      <div class="processing-status" id="processingStatus">Identifying plant...</div>
+      <div class="processing-step" id="processingStep">Sending image to PlantNet</div>
+    </div>
+  </div>
+
+  <!-- Results view -->
+  <div class="view" id="viewResults">
+    <div class="result-view" id="resultContent"></div>
+  </div>
+
+  <!-- Collection view -->
+  <div class="view" id="viewCollection">
+    <div class="collection-view">
+      <div class="collection-header">
+        <h2>My collection</h2>
+        <span class="collection-count" id="collectionCount">0 plants</span>
+      </div>
+      <input type="search" class="search-box" id="searchBox" placeholder="Search by name...">
+      <div id="collectionContent"></div>
+    </div>
+  </div>
+
+  <!-- Settings view -->
+  <div class="view" id="viewSettings">
+    <div class="settings-view">
+      <div class="settings-card">
+        <h3>PlantNet API key</h3>
+        <p>Flora uses the free Pl@ntNet API for identification. Get a free key (500 IDs/day) at <a href="https://my.plantnet.org/" target="_blank">my.plantnet.org</a> — sign up, then go to Settings → API key.</p>
+        <input type="text" class="api-input" id="apiKeyInput" placeholder="Paste your API key here" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div class="api-status" id="apiStatus"></div>
+        <button class="save-btn" id="btnSaveKey" style="margin-top:10px">Save key</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>About</h3>
+        <p>Flora identifies plants using Pl@ntNet's image recognition and pulls extra info from Wikipedia. All your saved plants live in your phone's local storage — nothing is sent anywhere except the photo you choose to identify.</p>
+      </div>
+
+      <div class="settings-card">
+        <h3>Clear collection</h3>
+        <p>Permanently delete all saved plants from this device.</p>
+        <button class="danger-btn" id="btnClearAll">Delete all plants</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Camera fullscreen view -->
+<div class="camera-view" id="cameraView">
+  <div class="camera-hint">Center the plant in the frame</div>
+  <video id="video" autoplay playsinline muted></video>
+  <div class="camera-frame"></div>
+  <div class="camera-controls">
+    <button class="cam-btn" id="btnCloseCam">×</button>
+    <div class="shutter" id="btnShutter"></div>
+    <button class="cam-btn" id="btnSwitchCam">🔄</button>
+  </div>
+</div>
+
+<!-- Plant details modal -->
+<div class="modal" id="detailModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="detailTitle">Plant</h2>
+      <button class="modal-close" id="detailClose">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<nav>
+  <button class="nav-btn active" data-view="viewIdentify">
+    <span class="nav-icon">🔍</span>
+    <span>Identify</span>
+  </button>
+  <button class="nav-btn" data-view="viewCollection">
+    <span class="nav-icon">📚</span>
+    <span>Collection</span>
+  </button>
+  <button class="nav-btn" data-view="viewSettings">
+    <span class="nav-icon">⚙</span>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ============== State ==============
+const state = {
+  apiKey: localStorage.getItem('plantnet-api-key') || '',
+  selectedOrgan: 'auto',
+  currentImage: null,    // base64 data URL of current photo
+  currentResult: null,   // PlantNet response
+  currentDetails: null,  // Wikipedia details
+  cameraStream: null,
+  facingMode: 'environment',
+  installPromptEvent: null
+};
+
+const $ = id => document.getElementById(id);
+
+// ============== IndexedDB (local plant database) ==============
+const DB_NAME = 'flora-db';
+const DB_VERSION = 1;
+const STORE = 'plants';
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE)) {
+        const store = d.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('savedAt', 'savedAt');
+        store.createIndex('scientificName', 'scientificName');
+      }
+    };
+  });
+}
+
+function dbAdd(plant) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).add(plant);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result.sort((a,b) => b.savedAt - a.savedAt));
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGet(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbClear() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ============== UI: views, toasts, nav ==============
+function switchView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  $(viewId).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === viewId);
+  });
+  if (viewId === 'viewCollection') renderCollection();
+  if (viewId === 'viewSettings') showApiKey();
+}
+
+function showToast(msg, ms = 2000) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+document.querySelectorAll('.nav-btn').forEach(b => {
+  b.onclick = () => switchView(b.dataset.view);
+});
+
+$('btnSettings').onclick = () => switchView('viewSettings');
+
+// ============== Organ selection ==============
+document.querySelectorAll('#organPills .pill').forEach(p => {
+  p.onclick = () => {
+    document.querySelectorAll('#organPills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    state.selectedOrgan = p.dataset.organ;
+  };
+});
+
+// ============== Image input ==============
+$('btnPickPhoto').onclick = () => $('fileInput').click();
+$('fileInput').onchange = e => handleFile(e.target.files[0]);
+$('cameraInput').onchange = e => handleFile(e.target.files[0]);
+
+$('btnTakePhoto').onclick = async () => {
+  // Try the live camera first; if it fails, fall back to native camera input
+  try {
+    await openLiveCamera();
+  } catch (err) {
+    // Fallback: native camera capture (still works on Android even from file://)
+    $('cameraInput').click();
+  }
+};
+
+async function openLiveCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error('No mediaDevices');
+  }
+  state.cameraStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: state.facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
+  });
+  $('video').srcObject = state.cameraStream;
+  $('cameraView').classList.add('active');
+}
+
+function closeCamera() {
+  if (state.cameraStream) {
+    state.cameraStream.getTracks().forEach(t => t.stop());
+    state.cameraStream = null;
+  }
+  $('video').srcObject = null;
+  $('cameraView').classList.remove('active');
+}
+
+$('btnCloseCam').onclick = closeCamera;
+$('btnSwitchCam').onclick = async () => {
+  state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+  closeCamera();
+  try { await openLiveCamera(); } catch (e) { showToast('Could not switch camera'); }
+};
+
+$('btnShutter').onclick = () => {
+  const v = $('video');
+  if (!v.videoWidth) return;
+  const c = document.createElement('canvas');
+  // Cap at 1600px on the long edge to keep upload size reasonable
+  const maxDim = 1600;
+  let w = v.videoWidth, h = v.videoHeight;
+  if (Math.max(w, h) > maxDim) {
+    const scale = maxDim / Math.max(w, h);
+    w = Math.round(w * scale); h = Math.round(h * scale);
+  }
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(v, 0, 0, w, h);
+  const dataUrl = c.toDataURL('image/jpeg', 0.88);
+  closeCamera();
+  processImage(dataUrl);
+};
+
+function handleFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('Please choose an image file');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      // Resize to max 1600px edge
+      const maxDim = 1600;
+      let w = img.width, h = img.height;
+      if (Math.max(w, h) > maxDim) {
+        const scale = maxDim / Math.max(w, h);
+        w = Math.round(w * scale); h = Math.round(h * scale);
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      processImage(c.toDataURL('image/jpeg', 0.88));
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============== Identification flow ==============
+async function processImage(dataUrl) {
+  state.currentImage = dataUrl;
+  $('processingImg').src = dataUrl;
+  $('processingStatus').textContent = 'Identifying plant...';
+  $('processingStep').textContent = 'Sending image to PlantNet';
+  switchView('viewProcessing');
+
+  if (!state.apiKey) {
+    showToast('Add your PlantNet API key in Settings');
+    setTimeout(() => switchView('viewSettings'), 600);
+    return;
+  }
+
+  try {
+    const result = await identifyPlant(dataUrl, state.selectedOrgan);
+    state.currentResult = result;
+
+    if (!result.results || result.results.length === 0) {
+      showResults(null);
+      return;
+    }
+
+    $('processingStep').textContent = 'Looking up plant details...';
+    const top = result.results[0];
+    const sci = top.species.scientificNameWithoutAuthor;
+    const common = top.species.commonNames && top.species.commonNames[0];
+    const wiki = await fetchWikiInfo(sci, common);
+    state.currentDetails = wiki;
+
+    showResults(result, wiki);
+  } catch (err) {
+    console.error(err);
+    showResults(null, null, err.message || 'Identification failed');
+  }
+}
+
+async function identifyPlant(dataUrl, organ) {
+  const blob = await (await fetch(dataUrl)).blob();
+  const fd = new FormData();
+  fd.append('images', blob, 'plant.jpg');
+  fd.append('organs', organ);
+  const url = `https://my-api.plantnet.org/v2/identify/all?api-key=${encodeURIComponent(state.apiKey)}&lang=en&nb-results=5`;
+  const res = await fetch(url, { method: 'POST', body: fd });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    if (res.status === 401) throw new Error('Invalid API key. Check Settings.');
+    if (res.status === 404) throw new Error('No plant matched. Try a clearer photo.');
+    if (res.status === 429) throw new Error('Daily limit reached. Try again tomorrow.');
+    throw new Error('PlantNet error ' + res.status + (text ? ': ' + text.slice(0,100) : ''));
+  }
+  return res.json();
+}
+
+async function fetchWikiInfo(scientificName, commonName) {
+  // Try scientific name first, then common name
+  const tries = [scientificName];
+  if (commonName) tries.push(commonName);
+  for (const term of tries) {
+    try {
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}?redirect=true`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.extract && data.type !== 'disambiguation') {
+          return {
+            extract: data.extract,
+            thumbnail: data.thumbnail ? data.thumbnail.source : null,
+            url: data.content_urls && data.content_urls.desktop ? data.content_urls.desktop.page : null,
+            title: data.title
+          };
+        }
+      }
+    } catch (e) { /* try next */ }
+  }
+  return null;
+}
+
+// ============== Results rendering ==============
+function showResults(result, wiki, errorMsg) {
+  switchView('viewResults');
+  const root = $('resultContent');
+  root.innerHTML = '';
+
+  if (errorMsg) {
+    root.innerHTML = `
+      <img class="result-image" src="${state.currentImage}" alt="">
+      <div class="result-card">
+        <div class="match-name">Couldn't identify</div>
+        <p style="color:#666;font-size:14px;line-height:1.5;margin-top:8px">${escapeHtml(errorMsg)}</p>
+      </div>
+      <div class="result-actions">
+        <button onclick="switchView('viewIdentify')">Try again</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (!result || !result.results || result.results.length === 0) {
+    root.innerHTML = `
+      <img class="result-image" src="${state.currentImage}" alt="">
+      <div class="result-card">
+        <div class="match-name">No match</div>
+        <p style="color:#666;font-size:14px;line-height:1.5;margin-top:8px">PlantNet couldn't recognize a plant in this image. Try a closer or better-lit shot of a leaf or flower.</p>
+      </div>
+      <div class="result-actions">
+        <button onclick="switchView('viewIdentify')">Try again</button>
+      </div>
+    `;
+    return;
+  }
+
+  const top = result.results[0];
+  const species = top.species;
+  const sci = species.scientificNameWithoutAuthor;
+  const author = species.scientificNameAuthorship || '';
+  const common = species.commonNames && species.commonNames.length > 0
+    ? species.commonNames[0]
+    : sci;
+  const family = species.family ? species.family.scientificNameWithoutAuthor : '';
+  const genus = species.genus ? species.genus.scientificNameWithoutAuthor : '';
+  const confidence = Math.round(top.score * 100);
+  const allCommon = species.commonNames || [];
+
+  let html = `
+    <img class="result-image" src="${state.currentImage}" alt="">
+    <div class="result-card">
+      <div class="match-name">${escapeHtml(common)}</div>
+      <div class="match-sci">${escapeHtml(sci)}${author ? ' ' + escapeHtml(author) : ''}</div>
+      <span class="match-confidence">${confidence}% confidence</span>
+    </div>
+
+    <div class="result-card">
+      <div class="section-title">Taxonomy</div>
+      <div class="info-row"><div class="info-label">Family</div><div class="info-value">${escapeHtml(family || '—')}</div></div>
+      <div class="info-row"><div class="info-label">Genus</div><div class="info-value"><em>${escapeHtml(genus || '—')}</em></div></div>
+      <div class="info-row"><div class="info-label">Species</div><div class="info-value"><em>${escapeHtml(sci)}</em></div></div>
+      ${allCommon.length > 1 ? `<div class="info-row"><div class="info-label">Also called</div><div class="info-value">${escapeHtml(allCommon.slice(1, 5).join(', '))}</div></div>` : ''}
+    </div>
+  `;
+
+  if (wiki && wiki.extract) {
+    const paras = wiki.extract.split(/\n\n+/).filter(Boolean);
+    html += `
+      <div class="result-card">
+        <div class="section-title">About</div>
+        <div class="description">
+          ${paras.map(p => '<p>' + escapeHtml(p) + '</p>').join('')}
+        </div>
+        ${wiki.url ? `<p style="margin-top:12px;font-size:13px"><a href="${wiki.url}" target="_blank" style="color:#2d5a3d">Read more on Wikipedia →</a></p>` : ''}
+      </div>
+    `;
+  }
+
+  if (result.results.length > 1) {
+    html += `
+      <div class="result-card">
+        <div class="section-title">Other possible matches</div>
+        <div class="alternatives">
+          ${result.results.slice(1, 5).map(r => `
+            <div class="alt-item">
+              <div>
+                <div class="alt-name">${escapeHtml((r.species.commonNames && r.species.commonNames[0]) || r.species.scientificNameWithoutAuthor)}</div>
+                <div class="alt-sci">${escapeHtml(r.species.scientificNameWithoutAuthor)}</div>
+              </div>
+              <div class="alt-score">${Math.round(r.score * 100)}%</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="result-actions">
+      <button onclick="switchView('viewIdentify')">New scan</button>
+      <button class="save" id="btnSavePlant">＋ Save to collection</button>
+    </div>
+  `;
+
+  root.innerHTML = html;
+  $('btnSavePlant').onclick = saveCurrentPlant;
+}
+
+async function saveCurrentPlant() {
+  if (!state.currentResult || !state.currentResult.results || !state.currentResult.results[0]) return;
+  const top = state.currentResult.results[0];
+  const sp = top.species;
+  const plant = {
+    image: state.currentImage,
+    scientificName: sp.scientificNameWithoutAuthor,
+    scientificNameAuthor: sp.scientificNameAuthorship || '',
+    commonName: (sp.commonNames && sp.commonNames[0]) || sp.scientificNameWithoutAuthor,
+    commonNames: sp.commonNames || [],
+    family: sp.family ? sp.family.scientificNameWithoutAuthor : '',
+    genus: sp.genus ? sp.genus.scientificNameWithoutAuthor : '',
+    confidence: top.score,
+    description: state.currentDetails ? state.currentDetails.extract : null,
+    wikiUrl: state.currentDetails ? state.currentDetails.url : null,
+    alternatives: state.currentResult.results.slice(1, 5).map(r => ({
+      scientificName: r.species.scientificNameWithoutAuthor,
+      commonName: (r.species.commonNames && r.species.commonNames[0]) || r.species.scientificNameWithoutAuthor,
+      score: r.score
+    })),
+    savedAt: Date.now()
+  };
+  try {
+    await dbAdd(plant);
+    const btn = $('btnSavePlant');
+    if (btn) {
+      btn.textContent = '✓ Saved';
+      btn.disabled = true;
+    }
+    showToast('Saved to your collection');
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save: ' + e.message);
+  }
+}
+
+// ============== Collection ==============
+async function renderCollection() {
+  const all = await dbGetAll();
+  const filter = $('searchBox').value.trim().toLowerCase();
+  const filtered = filter
+    ? all.filter(p =>
+        (p.commonName || '').toLowerCase().includes(filter) ||
+        (p.scientificName || '').toLowerCase().includes(filter) ||
+        (p.family || '').toLowerCase().includes(filter)
+      )
+    : all;
+
+  $('collectionCount').textContent = all.length + (all.length === 1 ? ' plant' : ' plants');
+
+  const root = $('collectionContent');
+  if (filtered.length === 0) {
+    if (all.length === 0) {
+      root.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🌱</div>
+          <p>Your collection is empty</p>
+          <p class="hint">Identify a plant to add it here</p>
+        </div>
+      `;
+    } else {
+      root.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🔎</div>
+          <p>No matches</p>
+          <p class="hint">Try a different search</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="collection-grid">
+      ${filtered.map(p => `
+        <div class="plant-card" data-id="${p.id}">
+          <img src="${p.image}" alt="${escapeHtml(p.commonName)}" loading="lazy">
+          <div class="plant-card-info">
+            <div class="plant-card-name">${escapeHtml(p.commonName)}</div>
+            <div class="plant-card-sci">${escapeHtml(p.scientificName)}</div>
+            <div class="plant-card-date">${formatDate(p.savedAt)}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  root.querySelectorAll('.plant-card').forEach(c => {
+    c.onclick = () => openDetail(parseInt(c.dataset.id));
+  });
+}
+
+$('searchBox').oninput = renderCollection;
+
+async function openDetail(id) {
+  const plant = await dbGet(id);
+  if (!plant) return;
+  $('detailTitle').textContent = plant.commonName;
+  const body = $('detailBody');
+
+  let html = `
+    <img src="${plant.image}" style="width:100%;border-radius:14px;margin-bottom:14px;display:block">
+    <div class="result-card">
+      <div class="match-name">${escapeHtml(plant.commonName)}</div>
+      <div class="match-sci">${escapeHtml(plant.scientificName)}${plant.scientificNameAuthor ? ' ' + escapeHtml(plant.scientificNameAuthor) : ''}</div>
+      <span class="match-confidence">${Math.round(plant.confidence * 100)}% confidence</span>
+    </div>
+
+    <div class="result-card">
+      <div class="section-title">Taxonomy</div>
+      <div class="info-row"><div class="info-label">Family</div><div class="info-value">${escapeHtml(plant.family || '—')}</div></div>
+      <div class="info-row"><div class="info-label">Genus</div><div class="info-value"><em>${escapeHtml(plant.genus || '—')}</em></div></div>
+      <div class="info-row"><div class="info-label">Species</div><div class="info-value"><em>${escapeHtml(plant.scientificName)}</em></div></div>
+      ${plant.commonNames && plant.commonNames.length > 1 ? `<div class="info-row"><div class="info-label">Also called</div><div class="info-value">${escapeHtml(plant.commonNames.slice(1, 5).join(', '))}</div></div>` : ''}
+      <div class="info-row"><div class="info-label">Saved</div><div class="info-value">${formatDateLong(plant.savedAt)}</div></div>
+    </div>
+  `;
+
+  if (plant.description) {
+    const paras = plant.description.split(/\n\n+/).filter(Boolean);
+    html += `
+      <div class="result-card">
+        <div class="section-title">About</div>
+        <div class="description">${paras.map(p => '<p>' + escapeHtml(p) + '</p>').join('')}</div>
+        ${plant.wikiUrl ? `<p style="margin-top:12px;font-size:13px"><a href="${plant.wikiUrl}" target="_blank" style="color:#2d5a3d">Read more on Wikipedia →</a></p>` : ''}
+      </div>
+    `;
+  }
+
+  if (plant.alternatives && plant.alternatives.length > 0) {
+    html += `
+      <div class="result-card">
+        <div class="section-title">Other possible matches at the time</div>
+        <div class="alternatives">
+          ${plant.alternatives.map(a => `
+            <div class="alt-item">
+              <div>
+                <div class="alt-name">${escapeHtml(a.commonName)}</div>
+                <div class="alt-sci">${escapeHtml(a.scientificName)}</div>
+              </div>
+              <div class="alt-score">${Math.round(a.score * 100)}%</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  html += `
+    <button class="danger-btn" id="btnDeletePlant" style="margin-top:8px">Delete this plant</button>
+  `;
+
+  body.innerHTML = html;
+  $('detailModal').classList.add('active');
+  $('btnDeletePlant').onclick = async () => {
+    if (confirm('Delete ' + plant.commonName + ' from your collection?')) {
+      await dbDelete(id);
+      $('detailModal').classList.remove('active');
+      renderCollection();
+      showToast('Deleted');
+    }
+  };
+}
+
+$('detailClose').onclick = () => $('detailModal').classList.remove('active');
+$('detailModal').onclick = e => {
+  if (e.target.id === 'detailModal') $('detailModal').classList.remove('active');
+};
+
+// ============== Settings ==============
+function showApiKey() {
+  $('apiKeyInput').value = state.apiKey;
+  const status = $('apiStatus');
+  if (state.apiKey) {
+    status.textContent = '✓ Key saved';
+    status.classList.add('ok');
+  } else {
+    status.textContent = 'No key set yet';
+    status.classList.remove('ok');
+  }
+}
+
+$('btnSaveKey').onclick = () => {
+  const key = $('apiKeyInput').value.trim();
+  if (!key) {
+    showToast('Enter a key first');
+    return;
+  }
+  state.apiKey = key;
+  localStorage.setItem('plantnet-api-key', key);
+  showApiKey();
+  showToast('API key saved');
+};
+
+$('btnClearAll').onclick = async () => {
+  const all = await dbGetAll();
+  if (all.length === 0) {
+    showToast('Collection is already empty');
+    return;
+  }
+  if (confirm('Delete all ' + all.length + ' saved plants? This cannot be undone.')) {
+    await dbClear();
+    showToast('Collection cleared');
+    renderCollection();
+  }
+};
+
+// ============== PWA install ==============
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  state.installPromptEvent = e;
+  if (!localStorage.getItem('install-dismissed')) {
+    $('installBanner').classList.add('show');
+  }
+});
+
+$('btnInstall').onclick = async () => {
+  if (state.installPromptEvent) {
+    state.installPromptEvent.prompt();
+    const { outcome } = await state.installPromptEvent.userChoice;
+    state.installPromptEvent = null;
+    $('installBanner').classList.remove('show');
+    if (outcome === 'accepted') showToast('App installed!');
+  }
+};
+
+$('btnDismissInstall').onclick = () => {
+  $('installBanner').classList.remove('show');
+  localStorage.setItem('install-dismissed', '1');
+};
+
+// ============== Helpers ==============
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+
+function formatDateLong(ts) {
+  return new Date(ts).toLocaleString();
+}
+
+window.switchView = switchView;
+
+// ============== Boot ==============
+(async () => {
+  try {
+    await openDB();
+  } catch (e) {
+    showToast('Local database failed to open');
+    console.error(e);
+  }
+  if (!state.apiKey) {
+    // Gentle nudge on first run
+    setTimeout(() => {
+      if (!state.apiKey) showToast('Add your free PlantNet API key in Settings →', 3500);
+    }, 1500);
+  }
+})();
+</script>
+</body>
+</html>
